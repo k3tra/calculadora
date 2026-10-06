@@ -88,7 +88,12 @@ export default function SolvePage() {
       {needsSolving && !solution && !error && <p className="text-sm opacity-70">Resolviendo…</p>}
 
       {ejercicio && solution && (
-        <SolutionView latex={ejercicio.latex} enunciado_texto={ejercicio.enunciado_texto} solution={solution} />
+        <SolutionView
+          latex={ejercicio.latex}
+          enunciado_texto={ejercicio.enunciado_texto}
+          solution={solution}
+          tipo={ejercicio.tipo}
+        />
       )}
     </main>
   );

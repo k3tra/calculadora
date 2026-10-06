@@ -62,3 +62,4 @@ class Limiter:
 
 scan_limiter = Limiter("scan", settings.scan_per_minute, settings.max_concurrent_scan)
 solve_limiter = Limiter("solve", settings.solve_per_minute, settings.max_concurrent_solve)
+plot_limiter = Limiter("plot", settings.plot_per_minute, settings.max_concurrent_plot)

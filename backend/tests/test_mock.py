@@ -54,3 +54,15 @@ def test_mock_se_exporta_a_tex():
         "resultado_latex": sol["resultado_latex"], "verificacion": sol["verificacion"],
     })
     assert r.status_code == 200 and "$u = x^2$" in r.text
+
+
+@pytest.mark.parametrize("latex,esperado", [
+    ("x^2 - y^2", "x**2 - y**2"),
+    (r"\sin(x) \cdot y", "x**2 - y**2"),
+    ("x^2", "x**2*sin(x)"),
+    (r"\sqrt{x} + \frac{1}{x}", "x**2*sin(x)"),     # los comandos con "y" dentro no cuentan
+    (r"\int x \, dx", "x**2*sin(x)"),
+])
+def test_solve_mock_elige_2d_o_3d_segun_la_y_suelta(latex, esperado):
+    r = client.post("/api/solve", json={"latex": latex, "tipo": "otro"})
+    assert r.status_code == 200 and r.json()["enunciado_sympy"] == esperado

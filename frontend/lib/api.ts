@@ -92,3 +92,58 @@ export function saveBlob(blob: Blob, filename: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+// --- Graficadora (POST /api/plot): no llama a la API de pago ---------------------------------------
+// Cada subtipo con su propio nombre y sin objetos anidados: backend/tests/test_contract.py los lee con una regex.
+
+export type PlotRequest = {
+  tipo: Tipo;
+  enunciado_sympy: string;
+  resultado_sympy?: string;
+  x_min?: number | null;
+  x_max?: number | null;
+  y_min?: number | null;
+  y_max?: number | null;
+  n?: number;
+};
+
+export type Serie = {
+  label: string;
+  rol: "f" | "derivada" | "primitiva" | "izquierda" | "derecha";
+  segmentos: [number, number][][];
+};
+
+export type Punto = { x: number; y: number; label: string; hueco: boolean };
+
+export type Area = { a: number; b: number; serie: number };
+
+export type Plot2D = {
+  kind: "2d";
+  variable: string;
+  x_range: [number, number];
+  y_range: [number, number];
+  series: Serie[];
+  puntos: Punto[];
+  area: Area | null;
+};
+
+export type Plot3D = {
+  kind: "3d";
+  label: string;
+  x: number[];
+  y: number[];
+  z: (number | null)[][];
+  z_range: [number, number];
+};
+
+export type PlotNone = { kind: "none"; motivo: string };
+
+export type Plot = Plot2D | Plot3D | PlotNone;
+
+export function plot(req: PlotRequest): Promise<Plot> {
+  return request<Plot>("/api/plot", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+}

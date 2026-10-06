@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     solve_per_minute: int = 10
     max_concurrent_scan: int = 4
     max_concurrent_solve: int = 3
+    # La graficadora no gasta API pero cada petición arranca un proceso de SymPy: se limita la CPU.
+    plot_per_minute: int = 40
+    max_concurrent_plot: int = 2
     # Ruta a Tectonic; por defecto el de backend/bin si existe, y si no el del PATH.
     tectonic_bin: str = str(_LOCAL_TECTONIC) if _LOCAL_TECTONIC.exists() else "tectonic"
     pdf_timeout_s: int = 180

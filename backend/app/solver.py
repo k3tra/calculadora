@@ -1,9 +1,10 @@
 import asyncio
 import logging
+import re
 
 from .config import settings
 from .llm import parse_json
-from .mock import MOCK_SOLUTION
+from .mock import MOCK_SOLUTION, MOCK_SOLUTION_3D
 from .schemas import Solution, SolutionDraft, SolveRequest
 from .verify import verify
 
@@ -40,7 +41,8 @@ def _prompt(req: SolveRequest) -> str:
 
 async def solve(req: SolveRequest) -> Solution:
     if settings.mock_llm:
-        return MOCK_SOLUTION
+        # Una "y" suelta en el LaTeX (no dentro de un comando como \sqrt) simula un ejercicio de dos variables.
+        return MOCK_SOLUTION_3D if re.search(r"(?<![A-Za-z\\])y(?![A-Za-z])", req.latex) else MOCK_SOLUTION
     base = _prompt(req)
     text = base
     for attempt in range(MAX_RETRIES + 1):

@@ -23,3 +23,18 @@ MOCK_SOLUTION = Solution(
     enunciado_sympy="x**2*sin(x)",
     verificacion=Verificacion(estado="no_verificable", detalle="Respuesta simulada (MOCK_LLM)"),
 )
+
+# Con MOCK_LLM=1 y una "y" suelta en el LaTeX (p. ej. x^2 - y^2) se devuelve una función de dos variables,
+# para probar las superficies 3D y sus cortes sin gastar API.
+MOCK_SOLUTION_3D = Solution(
+    pasos=[
+        Paso(explicacion="La función depende de dos variables: su gráfica es una superficie $z = f(x, y)$.",
+             latex=r"z = x^{2} - y^{2}"),
+        Paso(explicacion="Es una silla de montar: sube en la dirección de $x$ y baja en la de $y$.",
+             latex=r"\frac{\partial z}{\partial x} = 2x, \quad \frac{\partial z}{\partial y} = -2y"),
+    ],
+    resultado_latex=r"z = x^{2} - y^{2}",
+    resultado_sympy="x**2 - y**2",
+    enunciado_sympy="x**2 - y**2",
+    verificacion=Verificacion(estado="no_verificable", detalle="Respuesta simulada (MOCK_LLM)"),
+)

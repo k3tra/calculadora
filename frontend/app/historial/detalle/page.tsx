@@ -43,7 +43,12 @@ function Detalle() {
         <>
           <p className="text-xs opacity-60">{new Date(entry.creado).toLocaleString("es")}</p>
           <StatementCard latex={entry.latex} imagen={entry.imagen} />
-          <SolutionView latex={entry.latex} enunciado_texto={entry.enunciado_texto} solution={entry.solution} />
+          <SolutionView
+            latex={entry.latex}
+            enunciado_texto={entry.enunciado_texto}
+            solution={entry.solution}
+            tipo={entry.tipo}
+          />
         </>
       )}
     </main>

@@ -19,7 +19,8 @@ def ts_fields(name: str) -> set[str]:
     return set(re.findall(r"(\w+)\??\s*:", body))
 
 
-@pytest.mark.parametrize("nombre", ["ScanResult", "Paso", "Verificacion", "Solution"])
+@pytest.mark.parametrize("nombre", ["ScanResult", "Paso", "Verificacion", "Solution", "PlotRequest", "Serie",
+                                    "Punto", "Area", "Plot2D", "Plot3D", "PlotNone"])
 def test_los_campos_coinciden(nombre):
     backend = set(getattr(schemas, nombre).model_fields)
     assert ts_fields(nombre) == backend, (
@@ -41,3 +42,14 @@ def test_los_estados_de_verificacion_coinciden():
     assert m
     estados = set(re.findall(r'"(\w+)"', m.group(1)))
     assert estados == set(typing.get_args(schemas.Verificacion.model_fields["estado"].annotation))
+
+
+def test_los_tipos_de_grafica_coinciden():
+    src = API_TS.read_text(encoding="utf-8")
+    # Los literales "kind" de los tres tipos de gráfica y los "rol" de las series.
+    for modelo, kind in ((schemas.Plot2D, "2d"), (schemas.Plot3D, "3d"), (schemas.PlotNone, "none")):
+        assert typing.get_args(modelo.model_fields["kind"].annotation) == (kind,)
+        assert f'kind: "{kind}"' in src, f'api.ts no declara kind: "{kind}"'
+    m = re.search(r"rol: ([^;]+);", src)
+    assert m
+    assert set(re.findall(r'"(\w+)"', m.group(1))) == set(typing.get_args(schemas.Serie.model_fields["rol"].annotation))

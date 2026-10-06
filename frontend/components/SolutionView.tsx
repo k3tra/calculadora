@@ -4,15 +4,16 @@ import { useState } from "react";
 import LatexView from "./LatexView";
 import StepCard from "./StepCard";
 import VerifyBadge from "./VerifyBadge";
-import { exportFile, saveBlob, type Solution } from "@/lib/api";
+import AutoPlot from "./plot/AutoPlot";
+import { exportFile, saveBlob, type Solution, type Tipo } from "@/lib/api";
 
 const BTN =
   "rounded-lg border border-black/20 px-4 py-2 text-sm disabled:opacity-50 dark:border-white/30";
 
-type Props = { latex: string; enunciado_texto: string; solution: Solution };
+type Props = { latex: string; enunciado_texto: string; solution: Solution; tipo?: Tipo };
 
 /** Pasos, resultado con su verificación y los botones de copiar / descargar. */
-export default function SolutionView({ latex, enunciado_texto, solution }: Props) {
+export default function SolutionView({ latex, enunciado_texto, solution, tipo = "otro" }: Props) {
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState<"tex" | "pdf" | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export default function SolutionView({ latex, enunciado_texto, solution }: Props
           <VerifyBadge verificacion={solution.verificacion} />
         </div>
       </section>
+      <AutoPlot tipo={tipo} solution={solution} />
       <div className="flex flex-wrap gap-2">
         <button onClick={copy} className={BTN}>
           {copied ? "¡Copiado!" : "Copiar LaTeX"}

@@ -5,10 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .export import CompileError, InvalidLatex, TectonicMissing, compile_pdf, render_tex
-from .limits import scan_limiter, solve_limiter
+from .limits import plot_limiter, scan_limiter, solve_limiter
 from .ocr import image_to_latex
+from .plot import plot
 from .preprocess import ImageTooLarge, preprocess
-from .schemas import ExportRequest, ScanResult, Solution, SolveRequest
+from .schemas import ExportRequest, Plot, PlotRequest, ScanResult, Solution, SolveRequest
 from .solver import solve
 
 ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp"}
@@ -49,6 +50,13 @@ async def scan(file: UploadFile = File(...)):
           dependencies=[Depends(solve_limiter.dependency())])
 async def solve_endpoint(req: SolveRequest):
     return await solve(req)
+
+
+@app.post("/api/plot", response_model=Plot,
+          dependencies=[Depends(plot_limiter.dependency())])
+async def plot_endpoint(req: PlotRequest):
+    # No llama a la API de pago. El cálculo corre en un proceso aparte con tiempo límite.
+    return await asyncio.to_thread(plot, req)
 
 
 def _attachment(content: bytes | str, media_type: str, filename: str) -> Response:
