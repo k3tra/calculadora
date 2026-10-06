@@ -22,3 +22,8 @@ backend/bin/
 # Sistema operativo
 Thumbs.db
 .DS_Store
+
+# Evaluación de lectura: imágenes y resultados generados (los scripts sí se versionan)
+backend/eval/corpus/
+backend/eval/corpus_real/
+backend/eval/results/
