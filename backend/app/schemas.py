@@ -23,6 +23,7 @@ class SolutionDraft(BaseModel):
     pasos: list[Paso]
     resultado_latex: str
     resultado_sympy: str = Field(description="Resultado en sintaxis SymPy, vacío si no aplica")
+    enunciado_sympy: str = Field(description="El enunciado en sintaxis SymPy (sin ambigüedades), vacío si no aplica")
 
 
 class Verificacion(BaseModel):

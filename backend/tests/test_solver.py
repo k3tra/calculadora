@@ -5,7 +5,7 @@ from app.schemas import SolutionDraft, SolveRequest, Verificacion
 
 
 def draft(res):
-    return SolutionDraft(pasos=[], resultado_latex=res, resultado_sympy=res)
+    return SolutionDraft(pasos=[], resultado_latex=res, resultado_sympy=res, enunciado_sympy="")
 
 
 def run(monkeypatch, drafts, verdicts):

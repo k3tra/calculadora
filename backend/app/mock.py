@@ -20,5 +20,6 @@ MOCK_SOLUTION = Solution(
     ],
     resultado_latex=r"f'(x) = 2x\sin(x) + x^{2}\cos(x)",
     resultado_sympy="2*x*sin(x) + x**2*cos(x)",
+    enunciado_sympy="x**2*sin(x)",
     verificacion=Verificacion(estado="no_verificable", detalle="Respuesta simulada (MOCK_LLM)"),
 )

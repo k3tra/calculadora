@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from .config import settings
 from .llm import parse_json
@@ -7,6 +8,8 @@ from .schemas import Solution, SolutionDraft, SolveRequest
 from .verify import verify
 
 MAX_RETRIES = 2
+# El logger de uvicorn: el del módulo no saldría por consola con la configuración por defecto.
+log = logging.getLogger("uvicorn.error")
 
 SYSTEM = (
     "Eres un profesor de matemáticas. Resuelve el ejercicio paso a paso, en español. "
@@ -17,7 +20,13 @@ SYSTEM = (
     "usa ** para potencias y * explícito para productos; sin 'f(x) =' ni 'y =' delante, solo la expresión. "
     "Para derivada: la derivada. Para integral indefinida: una primitiva sin '+C'; para definida: el valor. "
     "Para ecuación: la lista de soluciones reales, por ejemplo [2, 3]. Para límite: el valor ('oo' para infinito). "
-    "Déjalo vacío solo si el ejercicio no encaja en ninguno."
+    "Déjalo vacío solo si el ejercicio no encaja en ninguno. "
+    "enunciado_sympy es el ENUNCIADO del ejercicio transcrito a sintaxis SymPy, sin ambigüedades "
+    "(** para potencias, * explícito en todos los productos, paréntesis completos), y sirve para comprobar tu "
+    "resultado: derivada: la función a derivar (sin 'f(x) ='); integral: Integral(f, x) o, si es definida, "
+    "Integral(f, (x, a, b)) con oo para infinito; ecuación: Eq(lado_izquierdo, lado_derecho); "
+    "límite: Limit(f, x, a) con oo para infinito. Transcríbelo fielmente del ejercicio dado, sin simplificarlo "
+    "ni resolverlo. Déjalo vacío si no encaja en ninguno."
 )
 
 
@@ -37,6 +46,8 @@ async def solve(req: SolveRequest) -> Solution:
         draft = await parse_json(model=settings.solve_model, system=SYSTEM, content=text,
                                  output_format=SolutionDraft, effort="high")
         v = await asyncio.to_thread(verify, req.tipo, req.latex, draft)
+        # Solo tipo, estado y motivo: sirve para diagnosticar verificaciones fallidas sin guardar el enunciado.
+        log.info("verificacion tipo=%s intento=%d estado=%s detalle=%.200s", req.tipo, attempt + 1, v.estado, v.detalle)
         if v.estado != "no_verificado" or attempt == MAX_RETRIES:
             break
         text = (
