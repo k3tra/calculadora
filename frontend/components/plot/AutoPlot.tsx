@@ -6,7 +6,7 @@ import Plot2D from "./Plot2D";
 import { plot, type Plot, type Solution, type Tipo } from "@/lib/api";
 
 // El código de la superficie 3D solo se descarga cuando hay un ejercicio de dos variables.
-const Surface3D = dynamic(() => import("./Surface3D"), {
+const SurfacePanel = dynamic(() => import("./SurfacePanel"), {
   ssr: false,
   loading: () => <p className="text-sm opacity-70">Cargando gráfica 3D…</p>,
 });
@@ -58,7 +58,7 @@ export default function AutoPlot({ tipo, solution }: Props) {
   return (
     <section className="rounded-lg border border-black/10 p-3 dark:border-white/15">
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Superficie 3D</h2>
-      <Surface3D plot={current} />
+      <SurfacePanel plot={current} />
     </section>
   );
 }

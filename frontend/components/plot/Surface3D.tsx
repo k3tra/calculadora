@@ -21,7 +21,8 @@ export default function Surface3D({ plot }: { plot: Plot3D }) {
     if (!canvas?.parentElement) return;
     const ro = new ResizeObserver(([entry]) => {
       const w = Math.floor(entry.contentRect.width);
-      setSize({ w, h: Math.floor(w * 0.75) });
+      const h = Math.floor(w * 0.75);
+      setSize((p) => (p.w === w && p.h === h ? p : { w, h }));
     });
     ro.observe(canvas.parentElement);
     return () => ro.disconnect();
@@ -55,14 +56,15 @@ export default function Surface3D({ plot }: { plot: Plot3D }) {
 
   return (
     <figure className="flex flex-col gap-2">
-      <div className="w-full">
+      {/* La proporción la fija el CSS: el tamaño del lienzo ya no realimenta al observador. */}
+      <div className="relative w-full" style={{ aspectRatio: "4 / 3" }}>
         <canvas
           ref={canvasRef}
           role="img"
           aria-label={etiqueta}
           tabIndex={0}
-          style={{ width: size.w || "100%", height: size.h || undefined, touchAction: "none" }}
-          className="cursor-grab rounded-lg border border-black/10 focus:outline-2 focus:outline-blue-500 active:cursor-grabbing dark:border-white/15"
+          style={{ touchAction: "none" }}
+          className="absolute inset-0 h-full w-full cursor-grab rounded-lg border border-black/10 focus:outline-2 focus:outline-blue-500 active:cursor-grabbing dark:border-white/15"
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
             drag.current = { x: e.clientX, y: e.clientY };

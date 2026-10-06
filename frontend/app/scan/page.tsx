@@ -7,11 +7,18 @@ import CropEditor from "@/components/CropEditor";
 import LatexEditor from "@/components/LatexEditor";
 import LatexView from "@/components/LatexView";
 import RichText from "@/components/RichText";
-import { scan, type ScanResult } from "@/lib/api";
+import { scan, type ScanResult, type Tipo } from "@/lib/api";
 import { newId } from "@/lib/history";
 import { thumbnail } from "@/lib/thumbnail";
 
 const LOW_CONFIDENCE = 0.7;
+const TIPOS: { id: Tipo; texto: string }[] = [
+  { id: "derivada", texto: "Derivada" },
+  { id: "integral", texto: "Integral" },
+  { id: "ecuacion", texto: "Ecuación" },
+  { id: "limite", texto: "Límite" },
+  { id: "otro", texto: "Otro" },
+];
 const PICK_BTN =
   "flex-1 cursor-pointer rounded-lg border border-black/20 px-4 py-4 text-center font-medium " +
   "focus-within:ring-2 focus-within:ring-blue-500 dark:border-white/30 sm:flex-none";
@@ -23,6 +30,7 @@ export default function ScanPage() {
   const [pickId, setPickId] = useState(0); // key del CropEditor: una por foto elegida
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [manual, setManual] = useState(false); // ejercicio escrito a mano: sin imagen ni lectura de pago
   const [latex, setLatex] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +55,17 @@ export default function ScanPage() {
     setRaw(f);
     setPickId((n) => n + 1);
     setFile(null);
+    setManual(false);
     resetResult();
+  }
+
+  function onWrite() {
+    setRaw(null);
+    setFile(null);
+    setError(null);
+    setLatex("");
+    setManual(true);
+    setResult({ enunciado_texto: "", latex: "", tipo: "otro", confianza: 1 });
   }
 
   function onCropped(f: File) {
@@ -117,6 +135,9 @@ export default function ScanPage() {
           🖼️ Elegir imagen
           <input type="file" accept="image/*" onChange={(e) => onPick(e.target)} className="sr-only" />
         </label>
+        <button type="button" onClick={onWrite} className={PICK_BTN}>
+          ✍️ Escribir ejercicio
+        </button>
       </div>
 
       {raw && !file && <CropEditor key={pickId} file={raw} onDone={onCropped} onUseOriginal={onCropped} />}
@@ -145,14 +166,37 @@ export default function ScanPage() {
 
       {result && (
         <section className="flex flex-col gap-3">
-          {result.confianza < LOW_CONFIDENCE && (
+          {manual && (
+            <div className="flex flex-col gap-2">
+              <label className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium">Tipo de ejercicio</span>
+                <select
+                  value={result.tipo}
+                  onChange={(e) => setResult({ ...result, tipo: e.target.value as Tipo })}
+                  className="rounded-lg border border-black/20 bg-transparent px-2 py-1.5 dark:border-white/30"
+                >
+                  {TIPOS.map((t) => (
+                    <option key={t.id} value={t.id} className="text-black">
+                      {t.texto}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="text-sm opacity-70">
+                Elige el tipo para que se verifique y se grafique. Escribe la fórmula en el editor o pulsa «Editar LaTeX en bruto».
+              </p>
+            </div>
+          )}
+          {!manual && result.confianza < LOW_CONFIDENCE && (
             <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
               Confianza baja ({Math.round(result.confianza * 100)} %). Revisa el LaTeX antes de resolver.
             </p>
           )}
-          <p className="text-sm opacity-70">
-            <RichText text={result.enunciado_texto} />
-          </p>
+          {!manual && (
+            <p className="text-sm opacity-70">
+              <RichText text={result.enunciado_texto} />
+            </p>
+          )}
           <LatexEditor value={latex} onChange={setLatex} />
           <div className="overflow-x-auto rounded-lg border border-black/10 p-4">
             <LatexView latex={latex} block />
