@@ -1,0 +1,24 @@
+# Secretos: nunca al repositorio (las plantillas .env.example / .env.local.example sí se versionan)
+.env
+.env.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+*.tsbuildinfo
+
+# Binarios descargados (Tectonic, ~50 MB); ver CLAUDE.md para volver a descargarlo
+backend/bin/
+
+# Ajustes locales de Claude Code (launch.json sí se versiona)
+.claude/settings.local.json
+
+# Sistema operativo
+Thumbs.db
+.DS_Store

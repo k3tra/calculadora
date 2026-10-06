@@ -1,0 +1,15 @@
+# Dependencias directas con las versiones con las que se desarrolló y probó (Python 3.14).
+# Las transitivas las resuelve pip; para un entorno idéntico bit a bit, usar `pip freeze`.
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+anthropic==1.11.0
+pydantic-settings==2.15.0
+pillow==12.3.0
+sympy==1.14.0
+lark==1.3.1
+
+# Solo para los tests
+pytest==9.1.1
+httpx==0.28.1
+pypdf==6.19.0
