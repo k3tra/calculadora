@@ -21,6 +21,8 @@ export type Solution = {
   pasos: Paso[];
   resultado_latex: string;
   resultado_sympy: string;
+  // Opcional: las entradas del historial guardadas antes de añadirlo no lo tienen.
+  enunciado_sympy?: string;
   verificacion: Verificacion;
 };
 

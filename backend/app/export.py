@@ -78,6 +78,10 @@ def sanitize_math(latex: str) -> str:
         raise InvalidLatex("fórmula vacía")
     if len(s) > MAX_LEN:
         raise InvalidLatex("fórmula demasiado larga")
+    # TeX convierte ^^5c en "\" (y ^^M, ^^@... en caracteres de control) ANTES de interpretar comandos:
+    # permitiría escribir \input saltándose la lista blanca. "^^" no es LaTeX matemático legítimo.
+    if "^^" in s:
+        raise InvalidLatex("secuencia no permitida: ^^")
     depth = 0
     envs: list[str] = []
     i, n = 0, len(s)

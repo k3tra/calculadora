@@ -167,3 +167,54 @@ def test_pdf_real_contiene_el_texto_y_no_filtra_archivos():
     assert "Resolución" in text and "Calcula la derivada" in text
     assert "input" in text  # el texto literal sale impreso, no se ejecuta
     assert "[fonts]" not in text and "for 16-bit app support" not in text  # contenido de win.ini
+
+
+# --- Endurecimiento: "^^5c" es la barra invertida en TeX y saltaba la lista blanca ---
+# Comprobado: con `tectonic --untrusted`, \input de una ruta absoluta SÍ lee el fichero y lo imprime en el PDF;
+# el filtro es la única barrera.
+
+@pytest.mark.parametrize("malo", [
+    r"x^^5cinput{a}",
+    r"\text{^^5cinput{C:/x}}",
+    r"a^^M b",
+    r"x^^^^5c",
+])
+def test_sanitize_rechaza_doble_circunflejo(malo):
+    with pytest.raises(InvalidLatex, match=r"\^\^"):
+        sanitize_math(malo)
+
+
+def test_sanitize_sigue_aceptando_circunflejos_normales():
+    assert sanitize_math(r"x^{2} + y^3 + e^{x^{2}}")
+
+
+def test_texto_normal_con_doble_circunflejo_se_escapa():
+    assert "^^" not in escape_text("^^5cinput{x}")
+
+
+def test_formula_en_linea_con_doble_circunflejo_queda_como_texto_literal():
+    out = render_rich_text(r"mira $\text{^^5cinput{C:/x}}$ fin")
+    assert "^^" not in out
+    assert "$" not in out.replace(r"\$", "")
+
+
+def test_endpoint_422_con_doble_circunflejo_en_un_paso():
+    body = req(pasos=[Paso(explicacion="ok", latex=r"\text{^^5cinput{C:/x}}")]).model_dump()
+    r = client.post("/api/export/tex", json=body)
+    assert r.status_code == 422 and "^^" in r.json()["detail"]
+
+
+@pytest.mark.skipif(TECTONIC is None, reason="Tectonic no está instalado")
+def test_pdf_real_no_filtra_ficheros_locales_por_ninguna_via(tmp_path):
+    secreto = tmp_path / "secreto.txt"
+    secreto.write_text("CANARIO-SECRETO-98765\n", encoding="utf-8")
+    ruta = secreto.as_posix()
+    leer = "^^5cinput{" + ruta + "}"
+    r = req(
+        enunciado_texto=leer + " y $\text{" + leer + "}$",   # texto plano y fórmula en línea
+        pasos=[Paso(explicacion=leer, latex="x")],
+    )
+    resp = client.post("/api/export/pdf", json=r.model_dump())
+    assert resp.status_code == 200
+    text = "".join(p.extract_text() for p in PdfReader(io.BytesIO(resp.content)).pages)
+    assert "CANARIO" not in text

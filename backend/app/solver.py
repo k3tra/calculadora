@@ -25,7 +25,8 @@ SYSTEM = (
     "(** para potencias, * explícito en todos los productos, paréntesis completos), y sirve para comprobar tu "
     "resultado: derivada: la función a derivar (sin 'f(x) ='); integral: Integral(f, x) o, si es definida, "
     "Integral(f, (x, a, b)) con oo para infinito; ecuación: Eq(lado_izquierdo, lado_derecho); "
-    "límite: Limit(f, x, a) con oo para infinito. Transcríbelo fielmente del ejercicio dado, sin simplificarlo "
+    "límite: Limit(f, x, a) para el límite bilateral (x→a), LimitPlus(f, x, a) para x→a⁺ y LimitMinus(f, x, a) "
+    "para x→a⁻ (oo para infinito); si el límite bilateral no existe, pon nan en resultado_sympy. Transcríbelo fielmente del ejercicio dado, sin simplificarlo "
     "ni resolverlo. Déjalo vacío si no encaja en ninguno."
 )
 

@@ -31,9 +31,17 @@ MAX_LEN = 500
 _FUNCS = {n: getattr(sp, n) for n in (
     "sin", "cos", "tan", "cot", "sec", "csc", "asin", "acos", "atan", "acot", "asec", "acsc",
     "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "exp", "log", "sqrt", "Abs", "sign",
-    "pi", "E", "oo", "I", "Rational", "Eq", "Integral", "Limit", "Derivative",
+    "pi", "E", "oo", "I", "Rational", "Eq", "Integral", "Derivative",
 )}
-_FUNCS.update({"ln": sp.log, "arcsin": sp.asin, "arccos": sp.acos, "arctan": sp.atan, "abs": sp.Abs})
+_FUNCS.update({"ln": sp.log, "arcsin": sp.asin, "arccos": sp.acos, "arctan": sp.atan, "abs": sp.Abs,
+               "nan": sp.nan, "zoo": sp.zoo})
+# Sin comillas no se puede escribir la dirección de un límite (Limit(f, x, a, '+')), y Limit(f, x, a) en
+# SymPy significa por la derecha: el límite bilateral se hace explícito y los laterales tienen su nombre.
+_FUNCS.update({
+    "Limit": lambda f, x, a: sp.Limit(f, x, a, "+-"),
+    "LimitPlus": lambda f, x, a: sp.Limit(f, x, a, "+"),
+    "LimitMinus": lambda f, x, a: sp.Limit(f, x, a, "-"),
+})
 # Reales: con variables complejas SymPy deriva log(Abs(x)) como Derivative(re(x), x) y no se puede evaluar.
 _SYMS = {n: sp.Symbol(n, real=True) for n in "xyztnabck"}
 _LOCALS = {**_FUNCS, **_SYMS}
@@ -98,7 +106,8 @@ def parse_enunciado(latex: str, quitar_prefijo: bool):
     # parse_latex lee la "e" de e^{x} como una variable, no como el número de Euler.
     expr = expr.subs(sp.Symbol("e"), sp.E)
     # Mismas variables (reales) que las de safe_parse, para que las dos lecturas sean comparables.
-    return expr.xreplace({a: sp.Symbol(a.name, real=True) for a in expr.atoms(sp.Symbol)})
+    # (La dirección de un límite, "+", "-" o "+-", también es un Symbol: esa no se toca.)
+    return expr.xreplace({a: sp.Symbol(a.name, real=True) for a in expr.atoms(sp.Symbol) if a.name.isidentifier()})
 
 
 def _var(expr):
@@ -108,11 +117,16 @@ def _var(expr):
     return _SYMS["x"] if _SYMS["x"] in syms or not syms else sorted(syms, key=str)[0]
 
 
+# Con solo puntos positivos una respuesta válida únicamente para x>0 (p. ej. 1 como derivada de |x|)
+# pasaba por correcta: hay que probar también negativos y fraccionarios.
+_PUNTOS = (-2.3, -1.1, -0.4, 0.3, 0.7, 1.3, 1.9, 3.1)
+
+
 def _num_equal(a, b):
     """True/False si hay puntos válidos suficientes, None si no es concluyente."""
     syms = sorted(a.free_symbols | b.free_symbols, key=str)
     ok = 0
-    for base in (0.7, 1.3, 1.9, 2.4, 3.1):
+    for base in _PUNTOS:
         sub = {s: base + 0.37 * i for i, s in enumerate(syms)}
         try:
             da, db = complex(a.subs(sub).evalf()), complex(b.subs(sub).evalf())
@@ -120,6 +134,8 @@ def _num_equal(a, b):
             continue
         if any(cmath.isnan(v) or cmath.isinf(v) for v in (da, db)):
             continue
+        if abs(da.imag) > 1e-9 or abs(db.imag) > 1e-9:
+            continue  # fuera del dominio real (p. ej. log de un negativo): ese punto no cuenta
         if abs(da - db) > 1e-7 * (1 + abs(da)):
             return False
         ok += 1
@@ -164,8 +180,8 @@ def _signature(tipo: str, obj):
     if tipo == "limite":
         if not isinstance(obj, sp.Limit):
             raise Unverifiable("el enunciado no es un límite reconocible")
-        f, x, punto = obj.args[:3]
-        return [f], (x, punto)
+        f, x, punto, direccion = obj.args  # la dirección (+, -, +-) cambia el problema: se compara
+        return [f], (x, punto, direccion)
     raise Unverifiable("tipo sin verificador")
 
 
@@ -263,11 +279,25 @@ def _check_ecuacion(obj, cand):
     return "verificado", "Las soluciones cumplen la ecuación (no se comprobó que sean todas)"
 
 
+_LADOS = re.compile(r"left hand limit = (.+?) and right hand limit = (.+)$")
+
+
 def _check_limite(obj, cand):
-    ref = obj.doit()
+    try:
+        ref = obj.doit()
+    except ValueError as e:  # SymPy: "The limit does not exist since left hand limit = a and right hand limit = b"
+        if cand == sp.nan:
+            return "verificado", "El límite bilateral no existe, como indica el resultado"
+        lados = _LADOS.search(str(e))
+        motivo = f": por la izquierda {lados.group(1)} y por la derecha {lados.group(2)}" if lados else ""
+        return "no_verificado", f"El límite bilateral no existe{motivo}, pero el resultado indicado es {cand}"
     if isinstance(ref, sp.Limit):
         raise Unverifiable("SymPy no pudo calcular el límite")
-    same = ref == cand if ref.has(sp.oo, sp.zoo) or cand.has(sp.oo, sp.zoo) else equivalent(ref, cand)
+    if ref == sp.zoo and cand != sp.zoo:  # bilateral con ±infinito distintos a cada lado (p. ej. 1/x en 0)
+        return "no_verificado", f"El límite bilateral no existe (tiende a infinito con signos distintos), pero el resultado indicado es {cand}"
+    # -oo es otro objeto distinto de oo: sin él, un límite que tiende a -infinito se comparaba como un número.
+    infinito = ref.has(sp.oo, -sp.oo, sp.zoo) or cand.has(sp.oo, -sp.oo, sp.zoo)
+    same = ref == cand if infinito else equivalent(ref, cand)
     if same:
         return "verificado", "El límite coincide con el calculado por SymPy"
     return _mismatch(ref, cand)

@@ -172,3 +172,44 @@ def test_otros_tipos_con_enunciado_sympy():
     assert check("limite", r"\lim_{x \to 0} \frac{\sin x}{x}", "1", "Limit(sin(x)/x, x, 0)")[0] == "verificado"
     assert check("derivada", r"f(x) = \frac{x^{2}+1}{\sin x}",
                  "(2*x*sin(x) - (x**2+1)*cos(x))/sin(x)**2", "(x**2+1)/sin(x)")[0] == "verificado"
+
+
+# --- Endurecimiento: falsos "verificado" detectados en la revisión crítica ---
+
+def test_derivada_de_valor_absoluto_no_acepta_1():
+    # 1 solo es la derivada de |x| para x>0: se prueban también puntos negativos.
+    assert estado("derivada", r"f(x) = |x|", "1") == "no_verificado"
+    assert check("derivada", r"f(x) = \left|x\right|", "1", "Abs(x)")[0] == "no_verificado"
+    assert estado("derivada", r"f(x) = \sqrt{x^2}", "1") == "no_verificado"
+    assert estado("derivada", r"f(x) = |x|", "sign(x)") == "verificado"
+
+
+def test_dominio_real_no_da_falsas_alarmas_con_logaritmos():
+    assert estado("derivada", r"f(x) = \ln(x^{2})", "2/x") == "verificado"
+    assert estado("integral", r"\int \frac{1}{x} \, dx", "log(Abs(x))") == "verificado"
+
+
+@pytest.mark.parametrize("latex,resultado,modelo", [
+    (r"\lim_{x \to 0} \frac{|x|}{x}", "1", "Limit(Abs(x)/x, x, 0)"),
+    (r"\lim_{x \to 0} \frac{|x|}{x}", "1", ""),
+    (r"\lim_{x \to 0} \frac{1}{x}", "oo", "Limit(1/x, x, 0)"),
+    (r"\lim_{x \to 0} \frac{1}{x}", "oo", ""),
+])
+def test_limite_bilateral_que_no_existe_no_se_da_por_verificado(latex, resultado, modelo):
+    assert check("limite", latex, resultado, modelo)[0] == "no_verificado"
+
+
+def test_limite_bilateral_inexistente_se_acepta_si_el_resultado_lo_dice():
+    assert check("limite", r"\lim_{x \to 0} \frac{|x|}{x}", "nan", "Limit(Abs(x)/x, x, 0)")[0] == "verificado"
+
+
+def test_limites_laterales_y_su_direccion():
+    assert check("limite", r"\lim_{x \to 0^+} \frac{1}{x}", "oo", "LimitPlus(1/x, x, 0)")[0] == "verificado"
+    assert check("limite", r"\lim_{x \to 0^-} \frac{1}{x}", "-oo", "LimitMinus(1/x, x, 0)")[0] == "verificado"
+    # El modelo transcribe como bilateral un enunciado lateral: las dos lecturas no coinciden.
+    assert check("limite", r"\lim_{x \to 0^+} \frac{1}{x}", "oo", "Limit(1/x, x, 0)")[0] == "no_verificable"
+
+
+def test_limite_normal_sigue_verificandose():
+    assert check("limite", r"\lim_{x \to 0} \frac{\sin x}{x}", "1", "Limit(sin(x)/x, x, 0)")[0] == "verificado"
+    assert check("limite", r"\lim_{x \to 2} \frac{1}{x^{2}}", "1/4", "Limit(1/x**2, x, 2)")[0] == "verificado"
