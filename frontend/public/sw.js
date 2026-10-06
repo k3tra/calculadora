@@ -5,7 +5,7 @@
  * Qué hace: instala el shell offline, deja las navegaciones "red primero, caché si no hay red" y
  * los ficheros /_next/static/* "caché primero" (llevan hash en el nombre y no cambian).
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 // Páginas estáticas (HTML igual para todos, sin datos de usuario): así abrir /historial/detalle?id=…
@@ -13,6 +13,7 @@ const STATIC_CACHE = `static-${VERSION}`;
 const PRECACHE = [
   "/offline",
   "/scan",
+  "/graficar",
   "/solve",
   "/historial",
   "/historial/detalle",

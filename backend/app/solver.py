@@ -28,7 +28,9 @@ SYSTEM = (
     "Integral(f, (x, a, b)) con oo para infinito; ecuación: Eq(lado_izquierdo, lado_derecho); "
     "límite: Limit(f, x, a) para el límite bilateral (x→a), LimitPlus(f, x, a) para x→a⁺ y LimitMinus(f, x, a) "
     "para x→a⁻ (oo para infinito); si el límite bilateral no existe, pon nan en resultado_sympy. Transcríbelo fielmente del ejercicio dado, sin simplificarlo "
-    "ni resolverlo. Déjalo vacío si no encaja en ninguno."
+    "ni resolverlo. Si el ejercicio tiene dos variables, usa solo x e y en enunciado_sympy (nunca z: la altura "
+    "z = f(x, y) no es una variable de entrada), por ejemplo Derivative(x**2*y, x) para una derivada parcial o "
+    "Integral(f, (x, a, b), (y, c, d)) para una integral doble. Déjalo vacío si no encaja en ninguno."
 )
 
 

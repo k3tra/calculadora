@@ -98,7 +98,8 @@ export function saveBlob(blob: Blob, filename: string) {
 
 export type PlotRequest = {
   tipo: Tipo;
-  enunciado_sympy: string;
+  enunciado_sympy?: string;
+  enunciado_latex?: string;
   resultado_sympy?: string;
   x_min?: number | null;
   x_max?: number | null;

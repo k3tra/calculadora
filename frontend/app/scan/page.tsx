@@ -115,9 +115,14 @@ export default function ScanPage() {
     <main className="mx-auto w-full max-w-2xl p-6 flex flex-col gap-5">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-semibold">Escanear ejercicio</h1>
-        <Link href="/historial" className="text-sm text-blue-600">
-          Historial
-        </Link>
+        <nav className="flex gap-4 text-sm">
+          <Link href="/graficar" className="text-blue-600">
+            Graficar
+          </Link>
+          <Link href="/historial" className="text-blue-600">
+            Historial
+          </Link>
+        </nav>
       </div>
 
       <div className="flex flex-wrap gap-3">

@@ -295,3 +295,40 @@ def test_endpoint_devuelve_una_superficie_valida():
     assert r.status_code == 200
     p = Plot3D(**r.json())
     assert len(p.z) == 11 and p.z_range == (-9.0, 9.0)
+
+
+# --- Entrada libre en LaTeX (página /graficar) ---
+
+def bl(latex):
+    return build_plot("otro", "", "", None, None, None, None, 41, latex)
+
+
+def test_latex_una_variable_dibuja_la_funcion():
+    d = bl(r"x^2\sin(x)")
+    assert d["kind"] == "2d" and d["variable"] == "x"
+
+
+def test_latex_quita_el_prefijo_f_de_x():
+    assert bl(r"f(x)=\frac{1}{x}")["kind"] == "2d"
+
+
+def test_latex_dos_variables_dibuja_superficie_aunque_lleve_z():
+    for latex in (r"x^2-y^2", r"z = x^2-y^2"):
+        d = bl(latex)
+        assert d["kind"] == "3d", latex
+        assert d["z_range"][0] < 0 < d["z_range"][1]
+
+
+def test_latex_ilegible_da_motivo_propio():
+    d = bl(r"\foo{")
+    assert d["kind"] == "none" and "Traceback" not in d["motivo"]
+
+
+def test_endpoint_acepta_latex():
+    r = client.post("/api/plot", json={"enunciado_latex": r"x^2-y^2"})
+    assert r.status_code == 200 and r.json()["kind"] == "3d"
+
+
+def test_endpoint_sin_nada_da_none():
+    r = client.post("/api/plot", json={})
+    assert r.status_code == 200 and r.json()["kind"] == "none"

@@ -68,7 +68,8 @@ def _check_range(lo, hi, nombre):
 
 class PlotRequest(BaseModel):
     tipo: Tipo = "otro"
-    enunciado_sympy: str = Field(max_length=500)
+    enunciado_sympy: str = Field(default="", max_length=500)
+    enunciado_latex: str = Field(default="", max_length=500)  # alternativa a enunciado_sympy (página /graficar)
     resultado_sympy: str = Field(default="", max_length=500)
     x_min: float | None = Field(default=None, allow_inf_nan=False)
     x_max: float | None = Field(default=None, allow_inf_nan=False)

@@ -17,7 +17,7 @@ import sympy as sp
 from pydantic import TypeAdapter
 
 from .schemas import Plot, Plot2D, Plot3D, PlotNone, PlotRequest
-from .verify import Unverifiable, _num_equal, run_with_timeout, safe_parse
+from .verify import Unverifiable, _num_equal, parse_enunciado, run_with_timeout, safe_parse
 
 TIMEOUT_S = 6          # el proceso hijo se mata pasado este tiempo
 BUDGET_S = 3.0         # corte interno, antes del timeout, para devolver un motivo en vez de nada
@@ -347,13 +347,20 @@ def _plot_3d(clase, contenido, extras, xy, x_min, x_max, y_min, y_max, n, t0):
 
 # --- Punto de entrada ---------------------------------------------------------------------------
 
-def build_plot(tipo, enunciado_sympy, resultado_sympy, x_min, x_max, y_min, y_max, n) -> dict:
-    """Corre en el proceso hijo. Siempre devuelve un dict serializable."""
+def build_plot(tipo, enunciado_sympy, resultado_sympy, x_min, x_max, y_min, y_max, n, enunciado_latex="") -> dict:
+    """Corre en el proceso hijo. Siempre devuelve un dict serializable.
+
+    Si llega `enunciado_latex` (entrada libre del usuario) se interpreta con `parse_enunciado`, quitando un
+    prefijo `f(x) =` / `z =`; si no, `enunciado_sympy` pasa por `safe_parse`.
+    """
     t0 = time.monotonic()
     try:
-        if not enunciado_sympy.strip():
+        if enunciado_latex.strip():
+            obj = parse_enunciado(enunciado_latex, True)
+        elif enunciado_sympy.strip():
+            obj = safe_parse(enunciado_sympy, "enunciado_sympy")
+        else:
             raise _Sin("sin enunciado en SymPy: no se puede graficar")
-        obj = safe_parse(enunciado_sympy, "enunciado_sympy")
         clase, contenido, extras = _unwrap(obj)
         exprs = list(contenido) if clase == "eq" else [contenido]
         dim, simbolos = _classify(exprs)
@@ -378,7 +385,7 @@ _adapter = TypeAdapter(Plot)
 def plot(req: PlotRequest) -> Plot2D | Plot3D | PlotNone:
     """Calcula la gráfica en un proceso aparte con tiempo límite; ante cualquier fallo, PlotNone."""
     args = (req.tipo, req.enunciado_sympy, req.resultado_sympy,
-            req.x_min, req.x_max, req.y_min, req.y_max, req.n)
+            req.x_min, req.x_max, req.y_min, req.y_max, req.n, req.enunciado_latex)
     try:
         return _adapter.validate_python(run_with_timeout(build_plot, args, TIMEOUT_S))
     except TimeoutError:

@@ -11,6 +11,17 @@ const SurfacePanel = dynamic(() => import("./SurfacePanel"), {
   loading: () => <p className="text-sm opacity-70">Cargando gráfica 3D…</p>,
 });
 
+/** Gráfica ya calculada en su tarjeta (2D o superficie con cortes). `none` no dibuja nada. */
+export function PlotView({ plot: p }: { plot: Plot }) {
+  if (p.kind === "none") return null;
+  return (
+    <section className="rounded-lg border border-black/10 p-3 dark:border-white/15">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">{p.kind === "2d" ? "Gráfica" : "Superficie 3D"}</h2>
+      {p.kind === "2d" ? <Plot2D plot={p} /> : <SurfacePanel plot={p} />}
+    </section>
+  );
+}
+
 // En desarrollo React monta los efectos dos veces: se comparte la petición en curso por clave.
 const inflight = new Map<string, Promise<Plot>>();
 
@@ -46,19 +57,6 @@ export default function AutoPlot({ tipo, solution }: Props) {
   }, [key, tipo, enunciado, resultado]);
 
   const current = state.key === key ? state.plot : null;
-  if (!current || current.kind === "none") return null;
-  if (current.kind === "2d") {
-    return (
-      <section className="rounded-lg border border-black/10 p-3 dark:border-white/15">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Gráfica</h2>
-        <Plot2D plot={current} />
-      </section>
-    );
-  }
-  return (
-    <section className="rounded-lg border border-black/10 p-3 dark:border-white/15">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Superficie 3D</h2>
-      <SurfacePanel plot={current} />
-    </section>
-  );
+  if (!current) return null;
+  return <PlotView plot={current} />;
 }
