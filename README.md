@@ -2,6 +2,8 @@
 
 Escanea un ejercicio de matemáticas (foto o imagen), pásalo a LaTeX, resuélvelo paso a paso y grafícalo. Diseño completo en [PLAN.md](PLAN.md); notas de desarrollo en [CLAUDE.md](CLAUDE.md).
 
+**Guía paso a paso de cómo se construyó (y cómo reproducirlo o continuarlo): [docs/GUIA.md](docs/GUIA.md).**
+
 - **Leer:** imagen → LaTeX editable (editor visual MathLive o LaTeX en bruto), con recorte y giro. También se puede escribir el ejercicio sin imagen.
 - **Resolver:** pasos explicados en español con KaTeX. El resultado se **verifica con SymPy** (derivadas, integrales, ecuaciones, límites) y, si no cuadra, se reintenta hasta 2 veces.
 - **Graficar (gratis, sin IA):** curvas 2D automáticas bajo cada solución y superficies 3D `z = f(x, y)` con curvas de nivel y cortes `x = c` / `y = c`. Página `/graficar` para funciones libres.
